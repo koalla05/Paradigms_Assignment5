@@ -6,6 +6,13 @@
 #include <vector>
 using namespace std;
 
+bool isNumber(string input) {
+    for (int i=0; i < input.length(); i++) {
+        if (!isdigit(input[i])) return false;
+    }
+    return true;
+}
+
 int priority(const string& op) {
     if (op == "+")
     {
@@ -55,12 +62,7 @@ vector<string> tokenization(const string& input) {
 }
 
 void processToken(string token, vector<string>& postFix, stack<string>& opStack) {
-    bool isNumber = true;
-    for (int i=0; i < token.length(); i++) {
-        if (!isdigit(token[i])) isNumber = false;
-    }
-
-    if (isNumber) {
+    if (isNumber(token)) {
         postFix.push_back(token);
     }
 
@@ -88,6 +90,30 @@ vector<string> postFix(vector<string> tokens) {
     return postFix;
 }
 
+string calculate(vector<string> postFix) {
+    stack<string> s;
+    int result = 0;
+    for (int i=0; i < postFix.size(); i++) {
+        string element = postFix[i];
+        if (isNumber(element)) s.push(element);
+        else {
+            int num1 = stoi(s.top());
+            s.pop();
+            int num2 = stoi(s.top());
+            s.pop();
+
+            if (element == "+") result = num1 + num2;
+            else if (element == "*") result = num1 * num2;
+            else if (element == "/") result = num2 / num1;
+            else if (element == "-") result = num2 - num1;
+            s.push(std::to_string(result));
+        }
+
+    }
+
+    return s.top();
+}
+
 void output(const vector<string>& input) {
     for (int i = 0; i < input.size(); i++) {
         cout << input[i] << " ";
@@ -107,5 +133,8 @@ int main() {
     vector<string> postfix = postFix(tokens);
     output(postfix);
 
+    cout << "Calculation: " << endl;
+    string result = calculate(postfix);
+    cout << result;
     return 0;
 }
