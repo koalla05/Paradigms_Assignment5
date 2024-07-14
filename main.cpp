@@ -8,7 +8,8 @@
 using namespace std;
 
 bool isNumber(const string& input) {
-    if (!isdigit(input[0]) && input[0] != '-') return false;
+    if (input.size() == 1 && !isdigit(input[0])) return false;
+    if (!isdigit(input[0]) && input[0] != '-' ) return false;
     for (int i = 1; i < input.length(); ++i) {
         if (!isdigit(input[i]) && i!=0) return false;
     }
@@ -83,7 +84,7 @@ vector<string> tokenization(const string& input) {
                 b.clear();
             }
         }
-        else if (b.empty() && ch == '-') {
+        else if (b.empty() && ch == '-' && !isNumber(tokens.back())) {
             b += ch;
         }
         else {
