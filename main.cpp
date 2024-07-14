@@ -7,9 +7,10 @@
 #include <vector>
 using namespace std;
 
-bool isNumber(string input) {
-    for (int i=0; i < input.length(); i++) {
-        if (!isdigit(input[i])) return false;
+bool isNumber(const string& input) {
+    if (!isdigit(input[0]) && input[0] != '-') return false;
+    for (int i = 1; i < input.length(); ++i) {
+        if (!isdigit(input[i]) && i!=0) return false;
     }
     return true;
 }
@@ -29,9 +30,9 @@ int priority(const string& op) {
 
     if (op == "abs") return 2;
 
-    if (op == "max") return 3;
+    if (op == "max") return 2;
 
-    if (op == "min") return 3;
+    if (op == "min") return 2;
 
     return 100;
 }
@@ -39,7 +40,7 @@ int priority(const string& op) {
 vector<string> tokenization(const string& input) {
     vector<string> tokens;
     string b;
-    for (size_t i = 0; i < input.length(); i++) {
+    for (auto i = 0; i < input.length(); i++) {
         char ch = input[i];
 
         if (isxdigit(ch)) {
@@ -58,6 +59,32 @@ vector<string> tokenization(const string& input) {
                 tokens.push_back(b);
                 b.clear();
             }
+
+            else if (ch == 'm') b += ch;
+            else if (ch == 'a' && b.back() == 'm') b += ch;
+            else if (ch == 'x' && b.back() == 'a') {
+                b += ch;
+                tokens.push_back(b);
+                b.clear();
+            }
+
+            else if (ch == 'i' && b.back() == 'm') b += ch;
+            else if (ch == 'n' && b.back() == 'i') {
+                b += ch;
+                tokens.push_back(b);
+                b.clear();
+            }
+
+            else if (ch == 'a') b += ch;
+            else if (ch == 'b' && b.back() == 'a') b += ch;
+            else if (ch == 's' && b.back() == 'b') {
+                b += ch;
+                tokens.push_back(b);
+                b.clear();
+            }
+        }
+        else if (b.empty() && ch == '-') {
+            b += ch;
         }
         else {
             if (!b.empty() && b != "-") {
@@ -136,6 +163,25 @@ string calculate(vector<string> postFix) {
                 int num2 = stoi(s.top());
                 s.pop();
                 result = pow(num2, num1);
+            }
+            else if (element == "max") {
+                int num1 = stoi(s.top());
+                s.pop();
+                int num2 = stoi(s.top());
+                s.pop();
+                result = max(num1, num2);
+            }
+            else if (element == "min") {
+                int num1 = stoi(s.top());
+                s.pop();
+                int num2 = stoi(s.top());
+                s.pop();
+                result = min(num1, num2);
+            }
+            else if (element == "abs") {
+                int num1 = stoi(s.top());
+                s.pop();
+                result = abs(num1);
             }
             else {
                 int num1 = stoi(s.top());
