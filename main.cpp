@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <cctype> // for isxdigit and isspace
+#include <cmath>
 #include <stack>
 #include <string.h>
 #include <vector>
@@ -14,25 +15,25 @@ bool isNumber(string input) {
 }
 
 int priority(const string& op) {
-    if (op == "+")
-    {
-        return 0;
-    }
+    if (op == "(") return -1;
 
-    if (op == "-")
-    {
-        return 0;
-    }
+    if (op == "+") return 0;
 
-    if (op == "*")
-    {
-        return 1;
-    }
+    if (op == "-") return 0;
 
-    if (op == "/")
-    {
-        return 1;
-    }
+    if (op == "*") return 1;
+
+    if (op == "/") return 1;
+
+    if (op == "pow") return 2;
+
+    if (op == "abs") return 2;
+
+    if (op == "max") return 3;
+
+    if (op == "min") return 3;
+
+    return 100;
 }
 
 vector<string> tokenization(const string& input) {
@@ -48,12 +49,22 @@ vector<string> tokenization(const string& input) {
                 tokens.push_back(b);
                 b.clear();
             }
-        } else {
+        }
+        else if (isalpha(ch)) {
+            if (ch == 'p') b += ch;
+            else if (ch == 'o' && b.back() == 'p') b += ch;
+            else if (ch == 'w' && b.back() == 'o') {
+                b += ch;
+                tokens.push_back(b);
+                b.clear();
+            }
+        }
+        else {
             if (!b.empty() && b != "-") {
                 tokens.push_back(b);
                 b.clear();
             }
-            tokens.push_back(string(1, ch)); // Convert char to string and append
+            tokens.push_back(string(1, ch));
         }
     }
 
@@ -66,6 +77,28 @@ void processToken(string token, vector<string>& postFix, stack<string>& opStack)
         postFix.push_back(token);
     }
 
+    else if (token == "(") opStack.push(token);
+    else if (token == ")") {
+        string op = opStack.top();
+        opStack.pop();
+        while (op != "(") {
+            postFix.push_back(op);
+            op = opStack.top();
+            opStack.pop();
+        }
+        if (opStack.top() != "abs") {
+            postFix.push_back(opStack.top());
+            opStack.pop();
+        }
+    }
+    else if (token == ",") {
+        string op = opStack.top();
+        while (op != "(") {
+            postFix.push_back(op);
+            opStack.pop();
+            op = opStack.top();
+        }
+    }
     else {
         while (!opStack.empty() && priority(opStack.top()) >= priority(token)) {
             postFix.push_back(opStack.top());
@@ -97,15 +130,24 @@ string calculate(vector<string> postFix) {
         string element = postFix[i];
         if (isNumber(element)) s.push(element);
         else {
-            int num1 = stoi(s.top());
-            s.pop();
-            int num2 = stoi(s.top());
-            s.pop();
+            if (element == "pow") {
+                int num1 = stoi(s.top());
+                s.pop();
+                int num2 = stoi(s.top());
+                s.pop();
+                result = pow(num2, num1);
+            }
+            else {
+                int num1 = stoi(s.top());
+                s.pop();
+                int num2 = stoi(s.top());
+                s.pop();
 
-            if (element == "+") result = num1 + num2;
-            else if (element == "*") result = num1 * num2;
-            else if (element == "/") result = num2 / num1;
-            else if (element == "-") result = num2 - num1;
+                if (element == "+") result = num1 + num2;
+                else if (element == "*") result = num1 * num2;
+                else if (element == "/") result = num2 / num1;
+                else if (element == "-") result = num2 - num1;
+            }
             s.push(std::to_string(result));
         }
 
@@ -125,8 +167,10 @@ int main() {
     string input;
     cout << "Enter: " << endl;
     getline(cin, input);
+
+
     vector<string> tokens = tokenization(input);
-    cout << "Tokenization:" << endl;
+    cout << "Tokenizaon:" << endl;
     output(tokens);
 
     cout << "PostFix: " << endl;
@@ -136,5 +180,6 @@ int main() {
     cout << "Calculation: " << endl;
     string result = calculate(postfix);
     cout << result;
+
     return 0;
 }
