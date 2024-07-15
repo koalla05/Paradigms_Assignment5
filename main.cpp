@@ -2,8 +2,10 @@
 #include <string>
 #include <cctype> // for isxdigit and isspace
 #include <cmath>
+#include <sstream>
 #include <stack>
 #include <string.h>
+#include <unordered_map>
 #include <vector>
 using namespace std;
 
@@ -42,6 +44,7 @@ int priority(const string& op) {
 
     return 100;
 }
+
 
 vector<string> tokenization(const string& input) {
     vector<string> tokens;
@@ -225,11 +228,54 @@ void output(const vector<string>& input) {
     cout << endl;
 }
 
+tuple<unordered_map<string, string>, string> findExpressionVar(const string& input) {
+    string b;
+    unordered_map<string, string> dict;
+
+    size_t pos = input.find("=");
+
+    string variable = input.substr(4, pos - 5);
+    variable.erase(0, variable.find_first_not_of(' '));
+
+    string expression = input.substr(pos + 1);
+    expression.erase(0, expression.find_first_not_of(' '));
+
+    vector<string> tokens = tokenization(expression);
+    // cout << "Tokenization:" << endl;
+    // output(tokens);
+
+    vector<string> postfix = postFix(tokens);
+    // cout << "PostFix: " << endl;
+    // output(postfix);
+
+    // cout << "Calculation: " << endl;
+    string result = calculate(postfix);
+    cout << result << endl;
+
+    dict[variable] = result;
+    return make_tuple(dict, variable);
+}
+
 int main() {
     string input;
+    string inputVar;
     getline(cin, input);
+    if (input.substr(0, 4) == "var ") {
+        unordered_map<string, string> dict;
+        string var;
+        tie(dict, var) = findExpressionVar(input);
 
+        getline(cin, inputVar);
 
+        size_t pos = inputVar.find(var);
+        if (pos != string::npos) {
+            inputVar.replace(pos, var.length(), dict[var]);
+        } else {
+            cout << "Variable '" << var << "' not found in input." << endl;
+        }
+    }
+
+    input = inputVar;
     vector<string> tokens = tokenization(input);
     // cout << "Tokenization:" << endl;
     // output(tokens);
