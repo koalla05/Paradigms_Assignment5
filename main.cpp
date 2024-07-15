@@ -23,6 +23,15 @@ bool isOperator(string input) {
     return false;
 }
 
+bool isOperatorAr(string input) {
+    if (input == "*" || input == "/" || input == "*" || input == "-" ) return true;
+    return false;
+}
+bool isOperatorFunc(string input) {
+    if (input == "pow" || input == "abs" || input == "max" || input == "min" ) return true;
+    return false;
+}
+
 int priority(const string& op) {
     if (op == "(") return -1;
 
@@ -45,10 +54,35 @@ int priority(const string& op) {
     return 100;
 }
 
+bool validation(const string& input) {
+    for (size_t i = 0; i < input.size() - 3; ++i) {
+        char ch = input[i];
+        if (isOperator(string(1, ch)) && i == 0 && ch != '-') return false;
+        if (isOperatorAr(string(1, ch)) && i > 0 && isOperatorAr(string(1, input[i-1])) && ch != '-') return false;
+        if (isOperatorFunc(string(1, ch)) && i > 0 && isOperatorFunc(string(1, input[i-1]))) return false;
+
+        if (isalpha(ch)) {
+            if (ch == 'm' && (input.substr(i, 3) == "max" || input.substr(i, 3) == "min")) return true;
+            if (ch == 'a' && (input.substr(i - 1, 3) == "max" || input.substr(i, 3) == "abs")) return true;
+            if (ch == 'x' && input.substr(i - 2, 3) == "max") return true;
+            if (ch == 'i' && input.substr(i - 1, 3) == "min") return true;
+            if (ch == 'n' && input.substr(i - 2, 3) == "min") return true;
+            if (ch == 'b' && input.substr(i - 1, 3) == "abs") return true;
+            if (ch == 's' && input.substr(i - 2, 3) == "abs") return true;
+            if (ch == 'p' && input.substr(i, 3) == "pow") return true;
+            if (ch == 'o' && input.substr(i - 1, 3) == "pow") return true;
+            if (ch == 'w' && input.substr(i - 2, 3) == "pow") return true;
+        }
+    }
+    return false;
+}
 
 vector<string> tokenization(const string& input) {
     vector<string> tokens;
     string b;
+
+    if (!validation(input)) cout << "Error in input" << endl;
+
     for (auto i = 0; i < input.length(); i++) {
         char ch = input[i];
 
@@ -215,7 +249,11 @@ string calculate(vector<string> postFix) {
             }
             s.push(std::to_string(result));
         }
-
+        // if (!s.empty())
+        // {
+        //     cout << "Too many numbers" << endl;
+        //     exit(0);
+        // }
     }
 
     return s.top();
