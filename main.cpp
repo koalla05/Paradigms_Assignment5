@@ -227,19 +227,18 @@ void output(const vector<string>& input) {
 
 int main() {
     string input;
-    cout << "Enter: " << endl;
     getline(cin, input);
 
 
     vector<string> tokens = tokenization(input);
-    cout << "Tokenization:" << endl;
-    output(tokens);
+    // cout << "Tokenization:" << endl;
+    // output(tokens);
 
-    cout << "PostFix: " << endl;
     vector<string> postfix = postFix(tokens);
-    output(postfix);
+    // cout << "PostFix: " << endl;
+    // output(postfix);
 
-    cout << "Calculation: " << endl;
+    // cout << "Calculation: " << endl;
     string result = calculate(postfix);
     cout << result;
 
