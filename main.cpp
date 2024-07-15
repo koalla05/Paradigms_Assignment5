@@ -16,6 +16,11 @@ bool isNumber(const string& input) {
     return true;
 }
 
+bool isOperator(string input) {
+    if (input == "*" || input == "/" || input == "*" || input == "-" || input == "pow" || input == "abs" || input == "max" || input == "min" || input == "(" || input == ")") return true;
+    return false;
+}
+
 int priority(const string& op) {
     if (op == "(") return -1;
 
@@ -46,59 +51,69 @@ vector<string> tokenization(const string& input) {
 
         if (isxdigit(ch)) {
             b += ch;
-        } else if (isspace(ch)) {
-            if (!b.empty() && b != "-") {
+
+        }
+        else if (ch == ' ' && b != "-") {
+            if (!b.empty()) {
                 tokens.push_back(b);
                 b.clear();
             }
+        }
+        else if (isOperator(string(1, ch)) && ch != '-' && !b.empty()) {
+            tokens.push_back(b);
+            tokens.push_back(string(1, ch));
+            b.clear();
+        }
+        else if (isOperator(string(1, ch)) && ch == '-' && !b.empty()) {
+            tokens.push_back(b);
+            tokens.push_back(string(1, ch));
+            b.clear();
+        }
+        else if (isOperator(string(1, ch)) && ch == '-' && b.empty() && (isNumber(tokens.back())|| tokens.back() == ")")) {
+            tokens.push_back(string(1, ch));
+            b.clear();
+        }
+        else if (isOperator(string(1, ch)) && ch == '-' && b.empty()) {
+            b += ch;
         }
         else if (isalpha(ch)) {
             if (ch == 'p') b += ch;
-            else if (ch == 'o' && b.back() == 'p') b += ch;
-            else if (ch == 'w' && b.back() == 'o') {
+            else if (ch == 'o' && !b.empty() && b.back() == 'p') b += ch;
+            else if (ch == 'w' && !b.empty() && b.back() == 'o') {
+                b += ch;
+                tokens.push_back(b);
+                b.clear();
+            } else if (ch == 'm') b += ch;
+            else if (ch == 'a' && !b.empty() && b.back() == 'm') b += ch;
+            else if (ch == 'x' && !b.empty() && b.back() == 'a') {
+                b += ch;
+                tokens.push_back(b);
+                b.clear();
+            } else if (ch == 'i' && !b.empty() && b.back() == 'm') b += ch;
+            else if (ch == 'n' && !b.empty() && b.back() == 'i') {
+                b += ch;
+                tokens.push_back(b);
+                b.clear();
+            } else if (ch == 'a') b += ch;
+            else if (ch == 'b' && !b.empty() && b.back() == 'a') b += ch;
+            else if (ch == 's' && !b.empty() && b.back() == 'b') {
                 b += ch;
                 tokens.push_back(b);
                 b.clear();
             }
-
-            else if (ch == 'm') b += ch;
-            else if (ch == 'a' && b.back() == 'm') b += ch;
-            else if (ch == 'x' && b.back() == 'a') {
-                b += ch;
-                tokens.push_back(b);
-                b.clear();
-            }
-
-            else if (ch == 'i' && b.back() == 'm') b += ch;
-            else if (ch == 'n' && b.back() == 'i') {
-                b += ch;
-                tokens.push_back(b);
-                b.clear();
-            }
-
-            else if (ch == 'a') b += ch;
-            else if (ch == 'b' && b.back() == 'a') b += ch;
-            else if (ch == 's' && b.back() == 'b') {
-                b += ch;
-                tokens.push_back(b);
-                b.clear();
-            }
-        }
-        else if (b.empty() && ch == '-' && !isNumber(tokens.back())) {
-            b += ch;
-        }
-        else {
+        } else {
             if (!b.empty() && b != "-") {
                 tokens.push_back(b);
                 b.clear();
             }
-            tokens.push_back(string(1, ch));
+            if (ch != ' ') tokens.push_back(string(1, ch));
         }
     }
 
     if (!b.empty()) tokens.push_back(b);
     return tokens;
 }
+
 
 void processToken(string token, vector<string>& postFix, stack<string>& opStack) {
     if (isNumber(token)) {
@@ -205,7 +220,7 @@ string calculate(vector<string> postFix) {
 
 void output(const vector<string>& input) {
     for (int i = 0; i < input.size(); i++) {
-        cout << input[i] << " ";
+        cout << input[i] << " :: ";
     }
     cout << endl;
 }
@@ -217,7 +232,7 @@ int main() {
 
 
     vector<string> tokens = tokenization(input);
-    cout << "Tokenizaon:" << endl;
+    cout << "Tokenization:" << endl;
     output(tokens);
 
     cout << "PostFix: " << endl;
