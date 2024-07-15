@@ -228,9 +228,8 @@ void output(const vector<string>& input) {
     cout << endl;
 }
 
-tuple<unordered_map<string, string>, string> findExpressionVar(const string& input) {
+tuple<unordered_map<string, string>, string> handleVar(const string& input, unordered_map<string, string> dict) {
     string b;
-    unordered_map<string, string> dict;
 
     size_t pos = input.find("=");
 
@@ -258,35 +257,31 @@ tuple<unordered_map<string, string>, string> findExpressionVar(const string& inp
 
 int main() {
     string input;
-    string inputVar;
-    getline(cin, input);
-    if (input.substr(0, 4) == "var ") {
-        unordered_map<string, string> dict;
-        string var;
-        tie(dict, var) = findExpressionVar(input);
+    unordered_map<string, string> dict;
 
-        getline(cin, inputVar);
+    while (true) {
+        getline(cin, input);
 
-        size_t pos = inputVar.find(var);
-        if (pos != string::npos) {
-            inputVar.replace(pos, var.length(), dict[var]);
+        if (input.substr(0, 4) == "var ") {
+            string var;
+            tie(dict, var) = handleVar(input, dict);
         } else {
-            cout << "Variable '" << var << "' not found in input." << endl;
+            string inputVar = input;
+
+            // Replace variables in the input expression
+            for (const auto& pair : dict) {
+                size_t pos = inputVar.find(pair.first);
+                while (pos != string::npos) {
+                    inputVar.replace(pos, pair.first.length(), pair.second);
+                    pos = inputVar.find(pair.first, pos + pair.second.length());
+                }
+            }
+
+            vector<string> tokens = tokenization(inputVar);
+            vector<string> postfix = postFix(tokens);
+            string result = calculate(postfix);
+            cout << "Result: " << result << endl;
         }
     }
-
-    input = inputVar;
-    vector<string> tokens = tokenization(input);
-    // cout << "Tokenization:" << endl;
-    // output(tokens);
-
-    vector<string> postfix = postFix(tokens);
-    // cout << "PostFix: " << endl;
-    // output(postfix);
-
-    // cout << "Calculation: " << endl;
-    string result = calculate(postfix);
-    cout << result;
-
     return 0;
 }
