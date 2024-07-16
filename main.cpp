@@ -18,6 +18,15 @@ bool isNumber(const string& input) {
     }
     return true;
 }
+bool isAllLetters(const string& str) {
+    for (char c : str) {
+        if (!isalpha(c)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 
 bool isOperator(string input) {
     if (input == "*" || input == "/" || input == "+" || input == "-" || input == "pow" || input == "abs" || input == "max" || input == "min" || input == "(" || input == ")") return true;
@@ -83,12 +92,12 @@ vector<string> tokenization(const string& input) {
                 tokens.push_back(string(1, ch));
                 b.clear();
             }
+            else if (ch == '-' && b.empty() && (tokens.empty() || isOperatorAr(tokens.back()) || tokens.back() == "(" || tokens.back() == "," )) {
+                b += ch;
+            }
             else if (ch == '-' && b.empty() && (isNumber(tokens.back())|| tokens.back() == ")")) {
                 tokens.push_back(string(1, ch));
                 b.clear();
-            }
-            else if (ch == '-' && b.empty() && (isOperatorAr(tokens.back())|| tokens.back() == "(")) {
-                b += ch;
             }
             else if (ch != '-' && !b.empty()) {
                 tokens.push_back(b);
@@ -232,6 +241,10 @@ string calculate(vector<string> postFix) {
                 s.pop();
                 result = abs(num1);
             }
+            else if (isAllLetters(element)) {
+                cout << "Error";
+                exit(0);
+            }
             else {
                 int num1 = stoi(s.top());
                 s.pop();
@@ -332,7 +345,7 @@ tuple<unordered_map<string, string>, vector<string>> handleDef(const string& inp
     for (int i = 0; i< parameters.length(); i++) {
         if (parameters[i] != ','  && parameters[i] != ' ') buffer+= parameters[i];
         else {
-            argValues.push_back(buffer);
+            if (!buffer.empty()) argValues.push_back(buffer);
             buffer.clear();
         }
     }
