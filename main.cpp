@@ -293,27 +293,95 @@ tuple<unordered_map<string, string>, string> handleVar(const string& input, unor
     return make_tuple(dict, variable);
 }
 
+tuple<unordered_map<string, string>, vector<string>> handleDef(const string& input, unordered_map<string, string> dict) {
+    string b;
+
+    size_t posF = input.find("{");
+
+    string function = input.substr(4, posF - 4);
+    function.erase(0, function.find_first_not_of(' '));
+
+    string expression = input.substr(posF + 1);
+    expression.erase(expression.find("}"), 1);
+
+    string nameFunc = function.substr(0, function.find('('));
+    dict[nameFunc] = expression;
+    string parameters = function.substr(function.find('(') + 1, function.find(')') - function.find('(') - 1);
+
+    vector<string> argValues;
+    string buffer;
+    for (int i = 0; i< parameters.length(); i++) {
+        if (parameters[i] != ','  && parameters[i] != ' ') buffer+= parameters[i];
+        else {
+            argValues.push_back(buffer);
+            buffer.clear();
+        }
+    }
+    argValues.push_back(buffer);
+    return make_tuple(dict, argValues);
+}
+
 int main() {
     string input;
-    unordered_map<string, string> dict;
-
+    unordered_map<string, string> dictVar;
+    unordered_map<string, string> dictFunc;
+    vector<string> par;
     while (true) {
         getline(cin, input);
 
         if (input.substr(0, 4) == "var ") {
             string var;
-            tie(dict, var) = handleVar(input, dict);
-        } else {
-            string inputVar = input;
+            tie(dictVar, var) = handleVar(input, dictVar);
+        } else if (input.substr(0, 4) == "def ") {
 
-            // Replace variables in the input expression
-            for (const auto& pair : dict) {
+            tie(dictFunc, par) = handleDef(input, dictFunc);
+        }
+        else {
+            string inputVar = input;
+            for (const auto& pair : dictVar) {
                 size_t pos = inputVar.find(pair.first);
                 while (pos != string::npos) {
                     inputVar.replace(pos, pair.first.length(), pair.second);
                     pos = inputVar.find(pair.first, pos + pair.second.length());
                 }
             }
+
+            for (const auto& pair : dictFunc) {
+                size_t pos = inputVar.find(pair.first);
+                while (pos != string::npos) {
+                    string parameters = inputVar.substr(inputVar.find('(') + 1, inputVar.find(')') - inputVar.find('(') - 1);
+                    vector<string> argValues;
+                    string b;
+                    for (int i = 0; i< parameters.length(); i++) {
+                        if (parameters[i] != ',' && parameters[i] != ' ') b += parameters[i];
+                        else {
+                            argValues.push_back(b);
+                            b.clear();
+                        }
+                    }
+                    argValues.push_back(b);
+
+                    unordered_map<string, string> paramMap;
+                    for (int i = 0; i < par.size(); ++i) {
+                        paramMap[par[i]] = argValues[i];
+                    }
+
+                    string funcExpr = dictFunc[pair.first];
+                    for (const auto& param : paramMap) {
+                        size_t posParam = funcExpr.find(param.first);
+                        while (posParam != string::npos) {
+                            funcExpr.replace(posParam, param.first.length(), param.second);
+                            posParam = funcExpr.find(param.first, posParam + param.second.length());
+                        }
+                    }
+                    inputVar = funcExpr;
+                    break;
+                }
+
+
+            }
+
+
 
             vector<string> tokens = tokenization(inputVar);
             vector<string> postfix = postFix(tokens);
