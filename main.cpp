@@ -2,6 +2,7 @@
 #include <string>
 #include <cctype> // for isxdigit and isspace
 #include <cmath>
+#include <regex>
 #include <sstream>
 #include <stack>
 #include <string.h>
@@ -19,12 +20,12 @@ bool isNumber(const string& input) {
 }
 
 bool isOperator(string input) {
-    if (input == "*" || input == "/" || input == "*" || input == "-" || input == "pow" || input == "abs" || input == "max" || input == "min" || input == "(" || input == ")") return true;
+    if (input == "*" || input == "/" || input == "+" || input == "-" || input == "pow" || input == "abs" || input == "max" || input == "min" || input == "(" || input == ")") return true;
     return false;
 }
 
 bool isOperatorAr(string input) {
-    if (input == "*" || input == "/" || input == "*" || input == "-" ) return true;
+    if (input == "*" || input == "/" || input == "+" || input == "-" ) return true;
     return false;
 }
 bool isOperatorFunc(string input) {
@@ -54,41 +55,15 @@ int priority(const string& op) {
     return 100;
 }
 
-bool validation(const string& input) {
-    for (size_t i = 0; i < input.size() - 3; ++i) {
-        char ch = input[i];
-        if (isOperator(string(1, ch)) && i == 0 && ch != '-') return false;
-        if (isOperatorAr(string(1, ch)) && i > 0 && isOperatorAr(string(1, input[i-1])) && ch != '-') return false;
-        if (isOperatorFunc(string(1, ch)) && i > 0 && isOperatorFunc(string(1, input[i-1]))) return false;
-
-        if (isalpha(ch)) {
-            if (ch == 'm' && (input.substr(i, 3) == "max" || input.substr(i, 3) == "min")) return true;
-            if (ch == 'a' && (input.substr(i - 1, 3) == "max" || input.substr(i, 3) == "abs")) return true;
-            if (ch == 'x' && input.substr(i - 2, 3) == "max") return true;
-            if (ch == 'i' && input.substr(i - 1, 3) == "min") return true;
-            if (ch == 'n' && input.substr(i - 2, 3) == "min") return true;
-            if (ch == 'b' && input.substr(i - 1, 3) == "abs") return true;
-            if (ch == 's' && input.substr(i - 2, 3) == "abs") return true;
-            if (ch == 'p' && input.substr(i, 3) == "pow") return true;
-            if (ch == 'o' && input.substr(i - 1, 3) == "pow") return true;
-            if (ch == 'w' && input.substr(i - 2, 3) == "pow") return true;
-        }
-    }
-    return false;
-}
-
 vector<string> tokenization(const string& input) {
     vector<string> tokens;
     string b;
-
-    if (!validation(input)) cout << "Error in input" << endl;
 
     for (auto i = 0; i < input.length(); i++) {
         char ch = input[i];
 
         if (isxdigit(ch)) {
             b += ch;
-
         }
         else if (ch == ' ' && b != "-") {
             if (!b.empty()) {
@@ -96,23 +71,40 @@ vector<string> tokenization(const string& input) {
                 b.clear();
             }
         }
-        else if (isOperator(string(1, ch)) && ch != '-' && !b.empty()) {
-            tokens.push_back(b);
-            tokens.push_back(string(1, ch));
-            b.clear();
+
+        else if (ch == '(' && ( tokens.empty() || !isOperatorFunc(tokens.back()) )) {
+            cout << "Error";
+            exit(0);
         }
-        else if (isOperator(string(1, ch)) && ch == '-' && !b.empty()) {
-            tokens.push_back(b);
-            tokens.push_back(string(1, ch));
-            b.clear();
+
+        else if (isOperator(string(1, ch))) {
+            if (ch == '-' && !b.empty()) {
+                tokens.push_back(b);
+                tokens.push_back(string(1, ch));
+                b.clear();
+            }
+            else if (ch == '-' && b.empty() && (isNumber(tokens.back())|| tokens.back() == ")")) {
+                tokens.push_back(string(1, ch));
+                b.clear();
+            }
+            else if (ch == '-' && b.empty() && (isOperatorAr(tokens.back())|| tokens.back() == "(")) {
+                b += ch;
+            }
+            else if (ch != '-' && !b.empty()) {
+                tokens.push_back(b);
+                tokens.push_back(string(1, ch));
+                b.clear();
+            }
+            else if (isOperatorAr(tokens.back())) {
+                cout << "Error";
+                exit(0);
+            }
+            else {
+                tokens.push_back(string(1, ch));
+            }
         }
-        else if (isOperator(string(1, ch)) && ch == '-' && b.empty() && (isNumber(tokens.back())|| tokens.back() == ")")) {
-            tokens.push_back(string(1, ch));
-            b.clear();
-        }
-        else if (isOperator(string(1, ch)) && ch == '-' && b.empty()) {
-            b += ch;
-        }
+
+
         else if (isalpha(ch)) {
             if (ch == 'p') b += ch;
             else if (ch == 'o' && !b.empty() && b.back() == 'p') b += ch;
@@ -137,6 +129,10 @@ vector<string> tokenization(const string& input) {
                 b += ch;
                 tokens.push_back(b);
                 b.clear();
+            }
+            else {
+                cout <<"Error";
+                exit(0);
             }
         } else {
             if (!b.empty() && b != "-") {
@@ -247,15 +243,13 @@ string calculate(vector<string> postFix) {
                 else if (element == "/") result = num2 / num1;
                 else if (element == "-") result = num2 - num1;
             }
-            s.push(std::to_string(result));
+            s.push(to_string(result));
         }
-        // if (!s.empty())
-        // {
-        //     cout << "Too many numbers" << endl;
-        //     exit(0);
-        // }
     }
-
+    if (s.size() > 1) {
+        cout << "Error";
+        exit(0);
+    }
     return s.top();
 }
 
@@ -266,37 +260,46 @@ void output(const vector<string>& input) {
     cout << endl;
 }
 
-tuple<unordered_map<string, string>, string> handleVar(const string& input, unordered_map<string, string> dict) {
+unordered_map<string, string> handleVar(const string& input, unordered_map<string, string> dict) {
     string b;
 
     size_t pos = input.find("=");
+    if (pos == string::npos) {
+        cout << "Error";
+        exit(0);
+    }
 
     string variable = input.substr(4, pos - 5);
     variable.erase(0, variable.find_first_not_of(' '));
+    if (variable.size() < 4) {
+        cout << "Error";
+        exit(0);
+    }
 
     string expression = input.substr(pos + 1);
     expression.erase(0, expression.find_first_not_of(' '));
 
     vector<string> tokens = tokenization(expression);
-    // cout << "Tokenization:" << endl;
-    // output(tokens);
-
     vector<string> postfix = postFix(tokens);
-    // cout << "PostFix: " << endl;
-    // output(postfix);
-
-    // cout << "Calculation: " << endl;
     string result = calculate(postfix);
-    cout << result << endl;
 
     dict[variable] = result;
-    return make_tuple(dict, variable);
+    return dict;
 }
 
 tuple<unordered_map<string, string>, vector<string>> handleDef(const string& input, unordered_map<string, string> dict) {
     string b;
 
     size_t posF = input.find("{");
+    if (posF == string::npos) {
+        cout << "Error";
+        exit(0);
+    }
+    size_t posF2 = input.find("}");
+    if (posF2 == string::npos) {
+        cout << "Error";
+        exit(0);
+    }
 
     string function = input.substr(4, posF - 4);
     function.erase(0, function.find_first_not_of(' '));
@@ -304,9 +307,25 @@ tuple<unordered_map<string, string>, vector<string>> handleDef(const string& inp
     string expression = input.substr(posF + 1);
     expression.erase(expression.find("}"), 1);
 
-    string nameFunc = function.substr(0, function.find('('));
+    size_t posBr = function.find('(');
+    if (posBr == string::npos) {
+        cout << "Error";
+        exit(0);
+    }
+
+    size_t posBr2 = function.find(')');
+    if (posBr2 == string::npos) {
+        cout << "Error";
+        exit(0);
+    }
+
+    string nameFunc = function.substr(0, posBr);
+    if (nameFunc.size() < 4) {
+        cout << "Error";
+        exit(0);
+    }
     dict[nameFunc] = expression;
-    string parameters = function.substr(function.find('(') + 1, function.find(')') - function.find('(') - 1);
+    string parameters = function.substr(posBr + 1, posBr2 - posBr - 1);
 
     vector<string> argValues;
     string buffer;
@@ -330,8 +349,7 @@ int main() {
         getline(cin, input);
 
         if (input.substr(0, 4) == "var ") {
-            string var;
-            tie(dictVar, var) = handleVar(input, dictVar);
+            dictVar =  handleVar(input, dictVar);
         } else if (input.substr(0, 4) == "def ") {
 
             tie(dictFunc, par) = handleDef(input, dictFunc);
@@ -355,7 +373,7 @@ int main() {
                     for (int i = 0; i< parameters.length(); i++) {
                         if (parameters[i] != ',' && parameters[i] != ' ') b += parameters[i];
                         else {
-                            argValues.push_back(b);
+                            if (!b.empty()) argValues.push_back(b);
                             b.clear();
                         }
                     }
@@ -368,25 +386,18 @@ int main() {
 
                     string funcExpr = dictFunc[pair.first];
                     for (const auto& param : paramMap) {
-                        size_t posParam = funcExpr.find(param.first);
-                        while (posParam != string::npos) {
-                            funcExpr.replace(posParam, param.first.length(), param.second);
-                            posParam = funcExpr.find(param.first, posParam + param.second.length());
-                        }
+                        regex paramRegex("\\b" + param.first + "\\b");
+                        funcExpr = regex_replace(funcExpr, paramRegex, param.second.c_str());
                     }
                     inputVar = funcExpr;
                     break;
                 }
-
-
             }
-
-
-
             vector<string> tokens = tokenization(inputVar);
             vector<string> postfix = postFix(tokens);
             string result = calculate(postfix);
             cout << "Result: " << result << endl;
+            break;
         }
     }
     return 0;
